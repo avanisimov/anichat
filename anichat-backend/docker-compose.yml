@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:17
+    container_name: anichat-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: anichat
+    ports:
+      - 5432:5432
+    healthcheck: 
+      test: ["CMD-SHELL", "pg_isready -U postgres -d anichat"] 
+      interval: 5s 
+      timeout: 5s 
+      retries: 3
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  migrate:
+    image: migrate/migrate:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations
+    command:
+      [
+      "-path",
+      "/migrations",
+      "-database",
+      "postgres://postgres:postgres@db:5432/anichat?sslmode=disable",
+      "up"
+      ]
+    restart: "no"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@mail.ru
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - 5050:80
+    depends_on:
+      - db
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+volumes:
+  db-data:
+  pgadmin-data:
