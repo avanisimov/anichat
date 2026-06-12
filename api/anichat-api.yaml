@@ -28,8 +28,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthEmailResponse'
-        '401':
-          description: Unauthorized - Invalid credentials
+        '400':
+          description: Bad request
           content:
             application/json:
               schema:
@@ -129,41 +129,6 @@ components:
       scheme: bearer
       bearerFormat: JWT                
   schemas:
-    AuthEmailRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-      required:
-        - email
-    AuthEmailResponse:
-      type: object
-      properties:
-        challengeId:
-          type: string
-      required:
-        - challengeId
-    AuthEmailOtpRequest:
-      type: object
-      properties:
-        challengeId:
-          type: string
-        otp:
-          type: string
-      required:
-        - challengeId
-        - otp
-    AuthEmailOtpResponse:
-      type: object
-      properties:
-        accessToken:
-          type: string
-        refreshToken:
-          type: string
-      required:
-        - accessToken
-        - refreshToken
     BaseResponse:
       type: object
       properties:
@@ -184,6 +149,59 @@ components:
               type: object
           required:
             - errorCode
+    AuthEmailRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+        - email
+    AuthEmailResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data: 
+              $ref: '#/components/schemas/AuthEmailResponseData'
+          required:
+            - data
+    AuthEmailResponseData:
+      type: object
+      properties:
+        challengeId:
+          type: string
+      required:
+        - challengeId
+    AuthEmailOtpRequest:
+      type: object
+      properties:
+        challengeId:
+          type: string
+        otp:
+          type: string
+      required:
+        - challengeId
+        - otp
+    AuthEmailOtpResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data: 
+              $ref: '#/components/schemas/AuthEmailOtpResponseData'
+          required:
+            - data
+    AuthEmailOtpResponseData:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+      required:
+        - accessToken
+        - refreshToken
     UsersMeResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'

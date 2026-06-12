@@ -46,7 +46,7 @@ type OTPVerifyResult struct {
 	Email    string
 }
 
-func (r *Repository) VerifyOTP(ctx context.Context, ticketId, code string) (*OTPVerifyResult, error) {
+func (r *Repository) VerifyOTP(ctx context.Context, challengeId, code string) (*OTPVerifyResult, error) {
 
 	var result OTPVerifyResult
 
@@ -73,7 +73,7 @@ func (r *Repository) VerifyOTP(ctx context.Context, ticketId, code string) (*OTP
             verified,
 			email
         `,
-		ticketId,
+		challengeId,
 		hashOTP(code),
 	).Scan(
 		&result.Success,

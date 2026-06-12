@@ -50,9 +50,9 @@ func (s *Service) LoginByEmail(context context.Context, email string) (*uuid.UUI
 	return &ticketId, nil
 }
 
-func (s *Service) VerifyLoginOtp(context context.Context, ticketId string, code string) (*string, *string, error) {
-	result, err := s.repo.VerifyOTP(context, ticketId, code)
-	log.Printf("Verifying OTP for %s: code=%s, error=%v", ticketId, code, err) // Логируем результат проверки OTP
+func (s *Service) VerifyLoginOtp(context context.Context, challengeId string, code string) (*string, *string, error) {
+	result, err := s.repo.VerifyOTP(context, challengeId, code)
+	log.Printf("Verifying OTP for %s: code=%s, error=%v", challengeId, code, err) // Логируем результат проверки OTP
 	if err != nil {
 		return nil, nil, err
 	}

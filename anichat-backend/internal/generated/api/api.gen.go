@@ -26,6 +26,13 @@ type AuthEmailOtpRequest struct {
 
 // AuthEmailOtpResponse defines model for AuthEmailOtpResponse.
 type AuthEmailOtpResponse struct {
+	Data    AuthEmailOtpResponseData `json:"data"`
+	Message *string                  `json:"message,omitempty"`
+	Success bool                     `json:"success"`
+}
+
+// AuthEmailOtpResponseData defines model for AuthEmailOtpResponseData.
+type AuthEmailOtpResponseData struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
 }
@@ -37,6 +44,13 @@ type AuthEmailRequest struct {
 
 // AuthEmailResponse defines model for AuthEmailResponse.
 type AuthEmailResponse struct {
+	Data    AuthEmailResponseData `json:"data"`
+	Message *string               `json:"message,omitempty"`
+	Success bool                  `json:"success"`
+}
+
+// AuthEmailResponseData defines model for AuthEmailResponseData.
+type AuthEmailResponseData struct {
 	ChallengeId string `json:"challengeId"`
 }
 
@@ -366,16 +380,16 @@ func (response AuthByEmail200JSONResponse) VisitAuthByEmailResponse(w http.Respo
 	return err
 }
 
-type AuthByEmail401JSONResponse ErrorResponse
+type AuthByEmail400JSONResponse ErrorResponse
 
-func (response AuthByEmail401JSONResponse) VisitAuthByEmailResponse(w http.ResponseWriter) error {
+func (response AuthByEmail400JSONResponse) VisitAuthByEmailResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(401)
+	w.WriteHeader(400)
 	_, err := buf.WriteTo(w)
 	return err
 }

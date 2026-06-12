@@ -1,11 +1,13 @@
 package user
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/alanis/anichat-backend/internal/features/auth"
+	"github.com/alanis/anichat-backend/internal/generated/api"
 )
 
 type Handler struct {
@@ -16,7 +18,22 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) GetUsersMe(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetUsersMe(
+	ctx context.Context, 
+	request api.GetUsersMeRequestObject,
+) (api.GetUsersMeResponseObject, error) {
+	return nil, nil
+}
+
+func (h *Handler) UpdateUsersMeProfile(
+	ctx context.Context, 
+	request api.UpdateUsersMeProfileRequestObject,
+) (api.UpdateUsersMeProfileResponseObject, error) {
+	return nil, nil
+}
+
+
+func (h *Handler) GetUsersMe1(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(auth.UserIDKey).(string)
 	log.Printf("Getting profile for user ID: %s", userID) // Логируем ID пользователя для отладки
 	if !ok {
