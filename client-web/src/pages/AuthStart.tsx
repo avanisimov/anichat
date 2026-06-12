@@ -19,7 +19,7 @@ export default function AuthStart() {
 
     // TODO: API запрос отправки OTP
 
-    navigate("/otp")
+    navigate("/auth/otp")
   }
 
   return (

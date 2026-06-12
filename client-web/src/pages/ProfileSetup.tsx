@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAppDispatch } from "../store/hooks"
-import { setNewUser } from "../store/userSlice"
 import "./ProfileSetup.css"
 
 export default function ProfileSetup() {
@@ -37,8 +36,8 @@ const dispatch = useAppDispatch()
     })
 
     // TODO API create profile
-    dispatch(setNewUser(false))
-    navigate("/app")
+    // dispatch(setNewUser(false))
+    navigate("/")
   }
 
   return (

@@ -1,8 +1,8 @@
 import { useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAppDispatch } from "../store/hooks"
-import { loginSuccess } from "../store/authSlice"
-import { setNewUser } from "../store/userSlice"
+import { setAuthenticated } from "../store/authSlice"
+// import { setNewUser } from "../store/userSlice"
 
 import "./Otp.css"
 
@@ -46,8 +46,8 @@ export default function Otp() {
 
     console.log("OTP:", otp)
 
-    dispatch(loginSuccess("token_123")) // после создания профиля
-     dispatch(setNewUser(true))
+    dispatch(setAuthenticated("token_123")) // после создания профиля
+    //  dispatch(setNewUser(true))
     // TODO API verify OTP
 
     navigate("/profile")
