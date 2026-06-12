@@ -44,9 +44,9 @@ func (s *Service) LoginByEmail(context context.Context, email string) (*uuid.UUI
 		return nil, err
 	}
 	log.Printf("Saved OTP for %s in database with id: %s", email, ticketId) // Логируем успешное сохранение OTP
-	// if err := s.emailSender.SendOtp(email, code); err != nil {
-	// 	return err
-	// }
+	if err := s.emailSender.SendOtp(email, code); err != nil {
+		return nil, err
+	}
 	log.Printf("Sent OTP email to %s", email) // Логируем успешную отправку письма
 	return &ticketId, nil
 }
