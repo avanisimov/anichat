@@ -9,7 +9,7 @@ type UserProfile struct {
 	UpdatedAt  time.Time  `json:"updatedAt"`
 }
 
-type UsersMeResponse struct {
+type UsersMeData struct {
 	ID             int64        `json:"id"`
 	Email          string       `json:"email"`
 	ProfileCreated bool         `json:"profileCreated"`

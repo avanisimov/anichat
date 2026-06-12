@@ -14,17 +14,6 @@ func NewRouter(authHandler *auth.Handler, userHandler *user.Handler) http.Handle
 
 	r := chi.NewRouter()
 
-	// r.Route("/api/auth", func(r chi.Router) {
-	// 	r.Post("/email", authHandler.LoginByEmail)
-	// 	r.Post("/email/otp", authHandler.VerifyOtp)
-	// })
-
-	// r.Group(func(r chi.Router) {
-	// r.Use(authHandler.AuthMiddleware())
-	// 	r.Get("/api/users/me", userHandler.GetUsersMe)
-	// 	r.Put("/api/users/me/profile", userHandler.UpsertProfile)
-	// })
-
 	handler := NewHandler(authHandler, userHandler)
 
 	strict := api.NewStrictHandler(

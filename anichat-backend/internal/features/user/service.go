@@ -10,7 +10,7 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) GetUserProfile(ctx context.Context, userID string) (*UsersMeResponse, error) {
+func (s *Service) GetUserProfile(ctx context.Context, userID string) (*UsersMeData, error) {
 	usersMeDTO, err := s.repo.GetProfileByUserID(
 		ctx,
 		userID,
@@ -27,7 +27,7 @@ func (s *Service) GetUserProfile(ctx context.Context, userID string) (*UsersMeRe
 		}
 	}
 
-	resp := &UsersMeResponse{
+	resp := &UsersMeData{
 		ID:             usersMeDTO.ID,
 		Email:          usersMeDTO.Email,
 		ProfileCreated: usersMeDTO.ProfileCreated,

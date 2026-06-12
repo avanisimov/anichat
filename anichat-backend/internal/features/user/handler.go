@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"context"
 	"encoding/json"
 	"log"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/alanis/anichat-backend/internal/features/auth"
 	"github.com/alanis/anichat-backend/internal/generated/api"
+	"github.com/alanis/anichat-backend/internal/utils"
+	"github.com/oapi-codegen/runtime/types"
 )
 
 type Handler struct {
@@ -19,19 +22,49 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) GetUsersMe(
-	ctx context.Context, 
+	ctx context.Context,
 	request api.GetUsersMeRequestObject,
 ) (api.GetUsersMeResponseObject, error) {
-	return nil, nil
+	userID, ok := ctx.Value(auth.UserIDKey).(string)
+	log.Printf("Getting profile for user ID: %s", userID) // Логируем ID пользователя для отладки
+	if !ok {
+		return api.GetUsersMe401JSONResponse{
+			Success: false,
+			Message: utils.PtrString("user ID not found in context"),
+		}, nil
+	}
+
+	usersMeData, err := h.service.GetUserProfile(ctx, userID)
+	if err != nil {
+		return api.GetUsersMe401JSONResponse{
+			Success: false,
+			Message: utils.PtrString("failed to get user profile"),
+		}, nil
+	}
+	responseData := &api.UsersMeResponseData{
+		Id:             fmt.Sprint(usersMeData.ID),
+		Email:          types.Email(usersMeData.Email),
+		ProfileCreated: usersMeData.ProfileCreated,
+	}
+	if usersMeData.ProfileCreated {
+		responseData.Profile = &api.UsersMeProfile{
+			FirstName: usersMeData.Profile.FirstName,
+			LastName:  usersMeData.Profile.LastName,
+			AvatarUrl: usersMeData.Profile.AvatarURL,
+		}
+	}
+	return api.GetUsersMe200JSONResponse{
+		Success: true,
+		Data:    *responseData,
+	}, nil
 }
 
 func (h *Handler) UpdateUsersMeProfile(
-	ctx context.Context, 
+	ctx context.Context,
 	request api.UpdateUsersMeProfileRequestObject,
 ) (api.UpdateUsersMeProfileResponseObject, error) {
 	return nil, nil
 }
-
 
 func (h *Handler) GetUsersMe1(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(auth.UserIDKey).(string)

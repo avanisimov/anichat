@@ -175,10 +175,38 @@ func (h *Handler) JWTStrictMiddleware(
 		case "AuthByEmail":
 			return next(ctx, w, r, request)
 
-		case "AuthByEmailOtp":
+		case "VerifyEmailOtp":
 			return next(ctx, w, r, request)
 		}
-		return next(ctx, w, r, request)
+		authHeader := r.Header.Get("Authorization")
+
+		if authHeader == "" {
+			http.Error(w, "missing authorization header", http.StatusUnauthorized)
+			return nil, nil
+		}
+
+		parts := strings.Split(authHeader, " ")
+
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			http.Error(w, "invalid authorization header", http.StatusUnauthorized)
+			return nil, nil
+		}
+
+		tokenString := parts[1]
+
+		claims, err := h.jwtManager.VerifyToken(tokenString)
+		if err != nil {
+			http.Error(w, "invalid token", http.StatusUnauthorized)
+			return nil, nil
+		}
+		log.Printf("Authenticated user %s with token %s", claims.UserID, tokenString) // Логируем успешную аутентификацию для отладки
+		ctxWithUserId := context.WithValue(
+			ctx,
+			UserIDKey,
+			claims.UserID,
+		)
+
+		return next(ctxWithUserId, w, r, request)
 	}
 
 	// return func(
