@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: anichat
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: anichat
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: db
+      DB_USER: anichat
+      DB_PASSWORD: secret
+      DB_NAME: anichat
+    depends_on:
+      - db
+    restart: always
+
+  frontend:
+    build: ./frontend
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - backend
+      - frontend
+    restart: always
+
+volumes:
+  pgdata:
