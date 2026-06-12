@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -82,7 +83,7 @@ func (s *Service) VerifyLoginOtp(context context.Context, challengeId string, co
 		}
 	}
 
-	accessToken, err := s.jwtManager.GenerateAccessToken(user) // Генерируем токены для пользователя
+	accessToken, err := s.jwtManager.GenerateAccessToken(user.ID, user.Role) // Генерируем токены для пользователя
 	if err != nil {
 		log.Printf("Failed to generate access token for user %s: %v", email, err)
 		return nil, nil, err
@@ -92,7 +93,33 @@ func (s *Service) VerifyLoginOtp(context context.Context, challengeId string, co
 		log.Printf("Failed to generate refresh token for user %s: %v", email, err)
 		return nil, nil, err
 	}
+	expiresAt := time.Now().Add(30 * 24 * time.Hour)
+	err = s.repo.CreateUserSession(context, user.ID, refreshToken, expiresAt)
+	if err != nil {
+		log.Printf("Failed to create user session %s: %v", email, err)
+		return nil, nil, err
+	}
 	log.Printf("Generated tokens for user %s: accessToken=%s, refreshToken=%s", email, accessToken, refreshToken) // Логируем успешную генерацию токенов
 
+	return &accessToken, &refreshToken, nil
+}
+
+func (s *Service) RefreshTokens(ctx context.Context, refreshToken string) (*string, *string, error) {
+	userSession, err := s.repo.GetSessionUserByRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return nil, nil, err
+	}
+	accessToken, err := s.jwtManager.GenerateAccessToken(userSession.UserID, userSession.Role) // Генерируем токены для пользователя
+	if err != nil {
+		log.Printf("Failed to generate access token for user %s: %v", userSession.UserID, err)
+		return nil, nil, err
+	}
+	newRefreshToken, err := s.jwtManager.GenerateRefreshToken()
+	if err != nil {
+		log.Printf("Failed to generate refresh token for user %s: %v", userSession.UserID, err)
+		return nil, nil, err
+	}
+	expiresAt := time.Now().Add(30 * 24 * time.Hour)
+	s.repo.UpdateSession(ctx, userSession.SessionID, newRefreshToken, expiresAt)
 	return &accessToken, &refreshToken, nil
 }

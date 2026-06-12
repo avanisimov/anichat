@@ -149,7 +149,12 @@ func (r *Repository) DeleteExpiredOTPs(ctx context.Context) error {
 	return err
 }
 
-func (r *Repository) CreateUserSession(ctx context.Context, userID int64, refreshToken string, expiresAt time.Time) error {
+func (r *Repository) CreateUserSession(
+	ctx context.Context,
+	userID int64,
+	refreshToken string,
+	expiresAt time.Time,
+) error {
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO user_sessions(user_id, refresh_token, expires_at)
 		VALUES ($1, $2, $3)
@@ -157,3 +162,87 @@ func (r *Repository) CreateUserSession(ctx context.Context, userID int64, refres
 
 	return err
 }
+
+func (r *Repository) UpdateSession(
+	ctx context.Context,
+	sessionID int64,
+	refreshToken string,
+	expiresAt time.Time,
+) error {
+
+	query := `
+		UPDATE user_sessions
+		SET
+			refresh_token = $1,
+			expires_at = $2
+		WHERE id = $3
+	`
+
+	result, err := r.db.Exec(
+		ctx,
+		query,
+		refreshToken,
+		expiresAt,
+		sessionID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected := result.RowsAffected()
+
+	if rowsAffected == 0 {
+		return errors.New("ErrSessionNotFound")
+	}
+
+	return nil
+}
+
+func (r *Repository) GetSessionUserByRefreshToken(
+	ctx context.Context,
+	refreshToken string,
+) (*SessionUser, error) {
+
+	query := `
+		SELECT
+			s.id,
+			u.id,
+			u.email,
+			u.role,
+			u.created_at,
+			s.expires_at
+		FROM user_sessions s
+		INNER JOIN users u
+			ON u.id = s.user_id
+		WHERE
+			s.refresh_token = $1
+			AND s.expires_at > NOW()
+		LIMIT 1
+	`
+
+	var sessionUser SessionUser
+
+	err := r.db.QueryRow(
+		ctx,
+		query,
+		refreshToken,
+	).Scan(
+		&sessionUser.SessionID,
+		&sessionUser.UserID,
+		&sessionUser.Email,
+		&sessionUser.Role,
+		&sessionUser.CreatedAt,
+		&sessionUser.ExpiresAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errors.New("ErrSessionNotFound")
+		}
+
+		return nil, err
+	}
+
+	return &sessionUser, nil
+}
+

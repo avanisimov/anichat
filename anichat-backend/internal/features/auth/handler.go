@@ -95,7 +95,31 @@ func (h *Handler) VerifyEmailOtp(
 	return api.VerifyEmailOtp200JSONResponse{
 		Success: true,
 		Message: utils.PtrString("OK"),
-		Data: api.AuthEmailOtpResponseData{
+		Data: api.AuthTokensResponseData{
+			AccessToken:  *accessToken,
+			RefreshToken: *refreshToken,
+		},
+	}, nil
+}
+
+func (h *Handler) RefreshAuth(
+	ctx context.Context, 
+	request api.RefreshAuthRequestObject,
+) (api.RefreshAuthResponseObject, error) {
+	log.Printf("Received refresh token: %s",
+		request.Body.RefreshToken,
+	)
+	accessToken, refreshToken, err := h.service.RefreshTokens(ctx, request.Body.RefreshToken)
+	if err != nil {
+		return api.RefreshAuth401JSONResponse{
+			Success: false,
+			Message: utils.PtrString("invalid OTP"),
+		}, nil
+	}
+	return api.RefreshAuth200JSONResponse{
+		Success: true,
+		Message: utils.PtrString("OK"),
+		Data: api.AuthTokensResponseData{
 			AccessToken:  *accessToken,
 			RefreshToken: *refreshToken,
 		},
@@ -177,6 +201,10 @@ func (h *Handler) JWTStrictMiddleware(
 
 		case "VerifyEmailOtp":
 			return next(ctx, w, r, request)
+
+		case "RefreshAuth":
+			return next(ctx, w, r, request)
+			
 		}
 		authHeader := r.Header.Get("Authorization")
 

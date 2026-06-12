@@ -15,3 +15,12 @@ type UserSession struct {
 	RefreshToken    string
 	ExpiresAt 		time.Time
 }
+
+type SessionUser struct {
+	SessionID  int64
+	UserID     int64
+	Email      string
+	Role       string
+	CreatedAt  time.Time
+	ExpiresAt  time.Time
+}

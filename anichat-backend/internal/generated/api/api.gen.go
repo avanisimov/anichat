@@ -24,19 +24,6 @@ type AuthEmailOtpRequest struct {
 	Otp         string `json:"otp"`
 }
 
-// AuthEmailOtpResponse defines model for AuthEmailOtpResponse.
-type AuthEmailOtpResponse struct {
-	Data    AuthEmailOtpResponseData `json:"data"`
-	Message *string                  `json:"message,omitempty"`
-	Success bool                     `json:"success"`
-}
-
-// AuthEmailOtpResponseData defines model for AuthEmailOtpResponseData.
-type AuthEmailOtpResponseData struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
-}
-
 // AuthEmailRequest defines model for AuthEmailRequest.
 type AuthEmailRequest struct {
 	Email openapi_types.Email `json:"email"`
@@ -54,6 +41,19 @@ type AuthEmailResponseData struct {
 	ChallengeId string `json:"challengeId"`
 }
 
+// AuthTokensResponse defines model for AuthTokensResponse.
+type AuthTokensResponse struct {
+	Data    AuthTokensResponseData `json:"data"`
+	Message *string                `json:"message,omitempty"`
+	Success bool                   `json:"success"`
+}
+
+// AuthTokensResponseData defines model for AuthTokensResponseData.
+type AuthTokensResponseData struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
 // BaseResponse defines model for BaseResponse.
 type BaseResponse struct {
 	Message *string `json:"message,omitempty"`
@@ -66,6 +66,11 @@ type ErrorResponse struct {
 	ErrorCode string                  `json:"errorCode"`
 	Message   *string                 `json:"message,omitempty"`
 	Success   bool                    `json:"success"`
+}
+
+// RefreshAuthRequest defines model for RefreshAuthRequest.
+type RefreshAuthRequest struct {
+	RefreshToken string `json:"refreshToken"`
 }
 
 // UsersMeProfile defines model for UsersMeProfile.
@@ -105,6 +110,9 @@ type AuthByEmailJSONRequestBody = AuthEmailRequest
 // VerifyEmailOtpJSONRequestBody defines body for VerifyEmailOtp for application/json ContentType.
 type VerifyEmailOtpJSONRequestBody = AuthEmailOtpRequest
 
+// RefreshAuthJSONRequestBody defines body for RefreshAuth for application/json ContentType.
+type RefreshAuthJSONRequestBody = RefreshAuthRequest
+
 // UpdateUsersMeProfileJSONRequestBody defines body for UpdateUsersMeProfile for application/json ContentType.
 type UpdateUsersMeProfileJSONRequestBody UpdateUsersMeProfileJSONBody
 
@@ -116,6 +124,9 @@ type ServerInterface interface {
 	// Verify OTP for email authentication
 	// (POST /api/auth/email/otp)
 	VerifyEmailOtp(w http.ResponseWriter, r *http.Request)
+	// Refresh AccessToken
+	// (POST /api/auth/refresh)
+	RefreshAuth(w http.ResponseWriter, r *http.Request)
 	// Get current authenticated user's profile
 	// (GET /api/users/me)
 	GetUsersMe(w http.ResponseWriter, r *http.Request)
@@ -137,6 +148,12 @@ func (_ Unimplemented) AuthByEmail(w http.ResponseWriter, r *http.Request) {
 // Verify OTP for email authentication
 // (POST /api/auth/email/otp)
 func (_ Unimplemented) VerifyEmailOtp(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Refresh AccessToken
+// (POST /api/auth/refresh)
+func (_ Unimplemented) RefreshAuth(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -180,6 +197,20 @@ func (siw *ServerInterfaceWrapper) VerifyEmailOtp(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.VerifyEmailOtp(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RefreshAuth operation middleware
+func (siw *ServerInterfaceWrapper) RefreshAuth(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RefreshAuth(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -349,6 +380,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/api/auth/email/otp", wrapper.VerifyEmailOtp)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/auth/refresh", wrapper.RefreshAuth)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/users/me", wrapper.GetUsersMe)
 	})
 	r.Group(func(r chi.Router) {
@@ -402,7 +436,7 @@ type VerifyEmailOtpResponseObject interface {
 	VisitVerifyEmailOtpResponse(w http.ResponseWriter) error
 }
 
-type VerifyEmailOtp200JSONResponse AuthEmailOtpResponse
+type VerifyEmailOtp200JSONResponse AuthTokensResponse
 
 func (response VerifyEmailOtp200JSONResponse) VisitVerifyEmailOtpResponse(w http.ResponseWriter) error {
 
@@ -419,6 +453,42 @@ func (response VerifyEmailOtp200JSONResponse) VisitVerifyEmailOtpResponse(w http
 type VerifyEmailOtp401JSONResponse ErrorResponse
 
 func (response VerifyEmailOtp401JSONResponse) VisitVerifyEmailOtpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RefreshAuthRequestObject struct {
+	Body *RefreshAuthJSONRequestBody
+}
+
+type RefreshAuthResponseObject interface {
+	VisitRefreshAuthResponse(w http.ResponseWriter) error
+}
+
+type RefreshAuth200JSONResponse AuthTokensResponse
+
+func (response RefreshAuth200JSONResponse) VisitRefreshAuthResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RefreshAuth401JSONResponse ErrorResponse
+
+func (response RefreshAuth401JSONResponse) VisitRefreshAuthResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -523,6 +593,9 @@ type StrictServerInterface interface {
 	// Verify OTP for email authentication
 	// (POST /api/auth/email/otp)
 	VerifyEmailOtp(ctx context.Context, request VerifyEmailOtpRequestObject) (VerifyEmailOtpResponseObject, error)
+	// Refresh AccessToken
+	// (POST /api/auth/refresh)
+	RefreshAuth(ctx context.Context, request RefreshAuthRequestObject) (RefreshAuthResponseObject, error)
 	// Get current authenticated user's profile
 	// (GET /api/users/me)
 	GetUsersMe(ctx context.Context, request GetUsersMeRequestObject) (GetUsersMeResponseObject, error)
@@ -615,6 +688,37 @@ func (sh *strictHandler) VerifyEmailOtp(w http.ResponseWriter, r *http.Request) 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(VerifyEmailOtpResponseObject); ok {
 		if err := validResponse.VisitVerifyEmailOtpResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RefreshAuth operation middleware
+func (sh *strictHandler) RefreshAuth(w http.ResponseWriter, r *http.Request) {
+	var request RefreshAuthRequestObject
+
+	var body RefreshAuthJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RefreshAuth(ctx, request.(RefreshAuthRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RefreshAuth")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RefreshAuthResponseObject); ok {
+		if err := validResponse.VisitRefreshAuthResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

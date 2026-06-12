@@ -54,6 +54,13 @@ func (h *Handler) VerifyEmailOtp(
 	return h.authHandler.VerifyEmailOtp(ctx, request)
 }
 
+func (h *Handler) RefreshAuth(
+	ctx context.Context, 
+	request api.RefreshAuthRequestObject,
+) (api.RefreshAuthResponseObject, error) {
+	return h.authHandler.RefreshAuth(ctx, request)
+}
+
 func (h *Handler) GetUsersMe(
 	ctx context.Context, 
 	request api.GetUsersMeRequestObject,

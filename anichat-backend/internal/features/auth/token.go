@@ -28,10 +28,10 @@ func NewJwtManager(secret string) *JwtManager {
     return &JwtManager{secret: secret}
 }
 
-func (jm *JwtManager) GenerateAccessToken(user *User) (string, error) {
+func (jm *JwtManager) GenerateAccessToken(userId int64, role string) (string, error) {
     claims := JWTClaims{
-        UserID: strconv.FormatInt(user.ID, 10),
-        Role:   user.Role,  
+        UserID: strconv.FormatInt(userId, 10),
+        Role:   role,  
         RegisteredClaims: jwt.RegisteredClaims{
             ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
             IssuedAt:  jwt.NewNumericDate(time.Now()),

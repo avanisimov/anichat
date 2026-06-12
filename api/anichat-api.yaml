@@ -53,7 +53,33 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthEmailOtpResponse'
+                $ref: '#/components/schemas/AuthTokensResponse'
+        '401':
+          description: Unauthorized - Invalid OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh AccessToken
+      operationId: RefreshAuth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshAuthRequest'
+      responses:
+        '200':
+          description: Successful refresh operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokensResponse'
         '401':
           description: Unauthorized - Invalid OTP
           content:
@@ -183,16 +209,23 @@ components:
       required:
         - challengeId
         - otp
-    AuthEmailOtpResponse:
+    RefreshAuthRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+      required:
+        - refreshToken
+    AuthTokensResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
           properties:
             data: 
-              $ref: '#/components/schemas/AuthEmailOtpResponseData'
+              $ref: '#/components/schemas/AuthTokensResponseData'
           required:
             - data
-    AuthEmailOtpResponseData:
+    AuthTokensResponseData:
       type: object
       properties:
         accessToken:
