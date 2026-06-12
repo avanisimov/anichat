@@ -14,3 +14,6 @@ restart: down up
 
 migrate:
 	docker compose -f $(COMPOSE_FILE) run --rm migrate
+
+api-codegen:
+	oapi-codegen -config oapi-codegen.yaml ../api/anichat-api.yaml     

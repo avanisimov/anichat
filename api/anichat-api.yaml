@@ -1,0 +1,224 @@
+openapi: 3.0.3
+
+info:
+  title: AniChat API
+  version: 1.0.0
+
+servers:
+  - url: https://api.anichat.com
+
+paths:
+  /api/auth/email:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user with email and password
+      operationId: AuthByEmail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthEmailRequest'
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthEmailResponse'
+        '401':
+          description: Unauthorized - Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/email/otp:
+    post:
+      tags:
+        - Authentication
+      summary: Verify OTP for email authentication
+      operationId: VerifyEmailOtp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthEmailOtpRequest'
+      responses:
+        '200':
+          description: Successful OTP verification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthEmailOtpResponse'
+        '401':
+          description: Unauthorized - Invalid OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/users/me:
+    get:
+      tags:
+        - Users
+      summary: Get current authenticated user's profile
+      operationId: GetUsersMe
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful retrieval of user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersMeResponse'
+        '401':
+          description: Unauthorized - Invalid or missing access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/users/me/profile:  
+    put:
+      tags:
+        - Users
+      summary: Update current authenticated user's profile
+      operationId: UpdateUsersMeProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+              required:
+                - firstName
+                - lastName
+      responses:
+        '200':
+          description: Successful update of user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersMeResponse'
+        '400':
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Invalid or missing access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT                
+  schemas:
+    AuthEmailRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+        - email
+    AuthEmailResponse:
+      type: object
+      properties:
+        challengeId:
+          type: string
+      required:
+        - challengeId
+    AuthEmailOtpRequest:
+      type: object
+      properties:
+        challengeId:
+          type: string
+        otp:
+          type: string
+      required:
+        - challengeId
+        - otp
+    AuthEmailOtpResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+      required:
+        - accessToken
+        - refreshToken
+    BaseResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            errorCode:
+              type: string
+            details:
+              type: object
+          required:
+            - errorCode
+    UsersMeResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UsersMeResponseData'
+          required:
+            - data
+    UsersMeResponseData:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        profileCreated:
+          type: boolean
+        profile:
+          $ref: '#/components/schemas/UsersMeProfile'
+      required:
+        - id
+        - email
+        - profileCreated  
+    UsersMeProfile:
+      type: object
+      properties:
+        avatarUrl:
+          type: string
+          format: uri
+        firstName:
+          type: string
+        lastName:
+          type: string
+      required:
+          - firstName
+          - lastName
